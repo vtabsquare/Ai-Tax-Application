@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configure Gemini
-API_KEY = "AIzaSyC-sRzvYQryG8g5q7rdbOrcUUqv6sbaSTA"
+API_KEY = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=API_KEY)
 
 def get_ai_suggestions(tax_data, synthesis_results):
