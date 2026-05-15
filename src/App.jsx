@@ -147,13 +147,7 @@ function App() {
                 >
                   <ReceiptText size={14} /> Handbook
                 </button>
-                <div className={cn("w-px h-4 mx-2", isDarkMode ? "bg-white/10" : "bg-slate-950/10")} />
-                <button className={cn(
-                  "p-2.5 rounded-lg transition-colors",
-                  isDarkMode ? "text-white/60 hover:text-white hover:bg-white/10" : "text-slate-950/60 hover:text-slate-950 hover:bg-slate-950/10"
-                )}>
-                  <User size={18} />
-                </button>
+
               </nav>
             </div>
           </header>

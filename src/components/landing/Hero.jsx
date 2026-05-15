@@ -74,7 +74,7 @@ const Hero = ({ onGetStarted, isDarkMode }) => {
             transition={{ delay: 0.2 }}
             className={cn("text-lg md:text-xl max-w-2xl mx-auto font-bold uppercase tracking-tight leading-relaxed", isDarkMode ? "text-white/40" : "text-slate-950/40")}
           >
-            Experience a new standard of financial clarity. Our neural engine identifies deep savings and elite investment strategies for the FY 2024–25 cycle.
+            Experience a new standard of financial clarity. Our neural engine identifies deep savings and elite investment strategies for the FY 2025–26 cycle.
           </motion.p>
         </div>
 

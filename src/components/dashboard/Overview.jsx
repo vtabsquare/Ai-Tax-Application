@@ -156,21 +156,21 @@ const StrategyDrawer = ({ strategy, isOpen, onClose, isDarkMode }) => {
                 <ChevronLeft size={24} />
               </button>
               
-              <div className="space-y-12">
+              <div className="space-y-10">
                 <div>
                   <h2 className="text-5xl font-black italic uppercase tracking-tighter mb-4 leading-none">{strategy.title}</h2>
                   <div className="h-1.5 w-24 bg-blue-600 rounded-full mb-8" />
+                  {/* Explanation text - same as shown on the card */}
+                  <p className={cn("text-[16px] font-bold leading-relaxed", isDarkMode ? "text-white/70" : "text-slate-950/70")}>{strategy.action}</p>
                 </div>
 
-                <div className="space-y-6">
-                   <div className="space-y-6">
-                      {details.points.map((point, i) => (
-                        <div key={i} className="flex gap-6 items-start">
-                           <div className="mt-2 w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0 shadow-[0_0_15px_rgba(37,99,235,0.4)]" />
-                           <p className="text-[18px] font-bold leading-relaxed italic">{point}</p>
-                        </div>
-                      ))}
-                   </div>
+                <div className={cn("p-8 rounded-[2rem] space-y-5 border", isDarkMode ? "bg-white/5 border-white/10" : "bg-slate-950/5 border-slate-950/10")}>
+                   {details.points.map((point, i) => (
+                     <div key={i} className="flex gap-5 items-start">
+                        <div className="mt-2 w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0 shadow-[0_0_15px_rgba(37,99,235,0.4)]" />
+                        <p className="text-[16px] font-bold leading-relaxed">{point}</p>
+                     </div>
+                   ))}
                 </div>
 
                 <div className={cn("p-10 rounded-[3rem] border-2 shadow-2xl shadow-blue-500/10", isDarkMode ? "bg-white/5 border-white/10" : "bg-slate-950/5 border-slate-950/10")}>
