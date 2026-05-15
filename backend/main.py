@@ -22,8 +22,10 @@ class TaxInput(BaseModel):
     email: Optional[str] = None
     mobile: Optional[str] = None
     age: str
-    employment: str
+    employment: Optional[str] = "Salaried"
     city: str
+    isMetro: bool = False
+    # Income Fields
     basicSalary: float = 0
     hra: float = 0
     allowances: float = 0
@@ -31,10 +33,23 @@ class TaxInput(BaseModel):
     interestIncome: float = 0
     rentalIncome: float = 0
     freelanceIncome: float = 0
+    # Tax Savings Fields (Master List)
     investments80C: float = 0
+    sec80CCC: float = 0
+    sec80CCD1: float = 0
+    sec80CCD1B: float = 0
+    sec80CCD2: float = 0
     deduction80D: float = 0
-    deduction80E: float = 0
-    nps: float = 0
+    sec80DD: float = 0
+    sec80DDB: float = 0
+    sec80E: float = 0
+    sec80EEA: float = 0
+    sec80G: float = 0
+    sec80GG: float = 0
+    sec80TTA: float = 0
+    sec80U: float = 0
+    sec24b: float = 0
+    sec80EE: float = 0
     rentPaid: float = 0
 
 @app.get("/")
@@ -45,23 +60,9 @@ async def health_check():
 async def synthesize(data: TaxInput):
     try:
         input_data = data.dict()
-        mapped_data = {
-            "basic_salary": input_data["basicSalary"],
-            "hra": input_data["hra"],
-            "allowances": input_data["allowances"],
-            "bonus": input_data["bonus"],
-            "interest_income": input_data["interestIncome"],
-            "rental_income": input_data["rentalIncome"],
-            "freelance_income": input_data["freelanceIncome"],
-            "investments_80c": input_data["investments80C"],
-            "deduction_80d": input_data["deduction80D"],
-            "deduction_80e": input_data["deduction80E"],
-            "nps_contribution": input_data["nps"],
-            "rent_paid_monthly": input_data["rentPaid"]
-        }
         
-        # 1. Perform Mathematical Synthesis
-        synthesis = get_tax_synthesis(mapped_data)
+        # 1. Perform Mathematical Synthesis (Smart Capping Logic inside engine)
+        synthesis = get_tax_synthesis(input_data)
         
         # 2. Perform AI Intelligence Synthesis
         ai_insights = get_ai_suggestions(input_data, synthesis)
@@ -78,4 +79,4 @@ async def synthesize(data: TaxInput):
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
