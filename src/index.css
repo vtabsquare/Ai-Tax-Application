@@ -42,7 +42,12 @@ html:not(.dark) {
 @layer base {
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: 'Barlow', sans-serif;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+  }
+
+  * {
+    font-family: 'Barlow', sans-serif;
   }
 
   /* Global Scroll Lock for Zero-Scroll Architecture */

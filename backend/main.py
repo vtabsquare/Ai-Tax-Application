@@ -26,6 +26,7 @@ class TaxInput(BaseModel):
     city: str
     isMetro: bool = False
     # Income Fields
+    annualSalary: float = 0
     basicSalary: float = 0
     hra: float = 0
     allowances: float = 0

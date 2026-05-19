@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, 
@@ -97,30 +98,36 @@ const StatutoryAlert = ({ message, visible, onHide, isDarkMode }) => (
 );
 
 const InputDesc = ({ text, limit, error, isDarkMode }) => (
-  <div className="flex flex-col gap-1 mt-1.5 ml-0.5">
+  <div className="flex flex-col gap-0.5 mt-1 ml-0.5">
     <div className="flex items-start gap-1.5">
       <Info size={10} className={cn("mt-0.5 shrink-0", error ? "text-red-500" : isDarkMode ? "text-white/60" : "text-slate-950/80")} />
       <p className={cn("text-[9px] font-bold uppercase tracking-wider leading-tight", error ? "text-red-500" : isDarkMode ? "text-white/60" : "text-slate-950/80")}>
-        {text}
+        {text} {limit && <span className={cn("ml-1 font-black", isDarkMode ? "text-emerald-400/80" : "text-emerald-600/80")}>[MAX: {limit}]</span>}
       </p>
     </div>
-    {limit && (
-      <p className={cn("text-[8.5px] font-black uppercase tracking-[0.15em] ml-3", isDarkMode ? "text-white/40" : "text-slate-950/50")}>
-        Statutory Limit: <span className={isDarkMode ? "text-white/90" : "text-slate-950/90"}>{limit}</span>
-      </p>
-    )}
   </div>
 );
 
 const PremiumSelect = ({ value, onChange, options, placeholder, label, shake, theme, direction = "down", isDarkMode }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownRect, setDropdownRect] = useState(null);
+  const triggerRef = useRef(null);
   const currentTheme = (isDarkMode ? DARK_THEMES : LIGHT_THEMES)[theme];
+
+  const handleOpen = () => {
+    if (triggerRef.current) {
+      const r = triggerRef.current.getBoundingClientRect();
+      setDropdownRect(r);
+    }
+    setIsOpen(prev => !prev);
+  };
 
   return (
     <div className="relative space-y-2 w-full">
       <label className={cn("text-[10.5px] font-black uppercase tracking-[0.35em] ml-1 italic block", isDarkMode ? "text-white/80" : "text-slate-950")}>{label}</label>
       <div 
-        onClick={() => setIsOpen(!isOpen)}
+        ref={triggerRef}
+        onClick={handleOpen}
         className={cn(
           "w-full backdrop-blur-xl border rounded-xl px-6 py-4 flex items-center justify-between cursor-pointer transition-all",
           currentTheme.input,
@@ -129,45 +136,51 @@ const PremiumSelect = ({ value, onChange, options, placeholder, label, shake, th
           !value && shake && "border-red-500/50 bg-red-500/5"
         )}
       >
-        <span className={cn("text-[14px] font-bold tracking-tight", !value ? (isDarkMode ? "text-white/40" : "text-slate-950/40") : (isDarkMode ? "text-white" : "text-slate-950"))}>
+        <span className={cn("text-[14px] font-bold tracking-tight", !value ? (isDarkMode ? "text-white/40" : "text-slate-950/50") : (isDarkMode ? "text-white" : "text-slate-950"))}>
           {value || placeholder}
         </span>
-        <ChevronDown size={18} className={cn("transition-transform duration-300", isDarkMode ? "text-white/40" : "text-slate-950/40", isOpen && "rotate-180")} />
+        <ChevronDown size={18} className={cn("transition-transform duration-300", isDarkMode ? "text-white/40" : "text-slate-950/50", isOpen && "rotate-180")} />
       </div>
 
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            <div className="fixed inset-0 z-[100]" onClick={() => setIsOpen(false)} />
-            <motion.div 
-              initial={{ opacity: 0, y: 10, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.98 }}
-              className={cn(
-                "absolute left-0 right-0 border rounded-2xl z-[110] py-3 overflow-hidden top-full mt-2",
-                isDarkMode ? "bg-[#020617] border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.9)]" : "bg-white border-slate-950/10 shadow-[0_30px_60px_rgba(0,0,0,0.1)]"
-              )}
-            >
-              {options.map((opt, i) => (
-                <div 
-                  key={i}
-                  onClick={() => {
-                    onChange(opt);
-                    setIsOpen(false);
-                  }}
-                  className={cn(
-                    "px-6 py-3 text-[13px] font-bold cursor-pointer transition-colors",
-                    isDarkMode ? "text-white/60 hover:text-white hover:bg-white/5" : "text-slate-950/60 hover:text-slate-950 hover:bg-slate-950/5",
-                    value === opt && (isDarkMode ? "text-white bg-white/5" : "text-slate-950 bg-slate-950/5")
-                  )}
-                >
-                  {opt}
-                </div>
-              ))}
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {isOpen && dropdownRect && createPortal(
+        <>
+          <div className="fixed inset-0" style={{ zIndex: 9998 }} onClick={() => setIsOpen(false)} />
+          <motion.div 
+            initial={{ opacity: 0, y: 6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.98 }}
+            style={{
+              position: 'fixed',
+              top: dropdownRect.bottom + 4,
+              left: dropdownRect.left,
+              width: dropdownRect.width,
+              zIndex: 9999,
+            }}
+            className={cn(
+              "border rounded-2xl py-3 overflow-hidden",
+              isDarkMode ? "bg-[#020617] border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.8)]" : "bg-white border-slate-200 shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+            )}
+          >
+            {options.map((opt, i) => (
+              <div 
+                key={i}
+                onClick={() => {
+                  onChange(opt);
+                  setIsOpen(false);
+                }}
+                className={cn(
+                  "px-6 py-3 text-[13px] font-bold cursor-pointer transition-colors",
+                  isDarkMode ? "text-white/70 hover:text-white hover:bg-white/5" : "text-slate-800 hover:bg-slate-50",
+                  value === opt && (isDarkMode ? "text-white bg-white/5" : "text-slate-950 bg-slate-100")
+                )}
+              >
+                {opt}
+              </div>
+            ))}
+          </motion.div>
+        </>,
+        document.body
+      )}
     </div>
   );
 };
@@ -197,9 +210,10 @@ const TaxWizard = ({ onComplete, initialData, onStepChange, isDarkMode }) => {
   const [formData, setFormData] = useState(initialData || {
     name: '', email: '', mobile: '', age: '', employment: 'Salaried', city: '',
     isMetro: false,
-    basicSalary: '', hra: '', allowances: '', bonus: '',
+    annualSalary: '', basicSalary: '', hra: '', allowances: '', bonus: '',
     interestIncome: '', rentalIncome: '', freelanceIncome: '',
-    investments80C: '', sec80CCD1B: '', 
+    epf: '', ppf: '', elss: '', lic: '', nsc: '', other80c: '',
+    sec80CCD1B: '', 
     deduction80D: '', sec80DD: '', sec80DDB: '',
     sec80E: '', sec80EEA: '', sec80EE: '', sec80G: '',
     sec80GG: '', sec80TTA: '', sec80U: '',
@@ -230,8 +244,34 @@ const TaxWizard = ({ onComplete, initialData, onStepChange, isDarkMode }) => {
       });
     }
     if (field === 'city') {
-      setFormData(prev => ({ ...prev, city: value, isMetro: value === 'Metro (Tier 1)' }));
+      const isMetro = value === 'Metro (Tier 1)';
+      setFormData(prev => {
+        let newHra = prev.hra;
+        if (prev.annualSalary) {
+          const annual = parseFloat(prev.annualSalary) || 0;
+          const basic = annual * 0.4;
+          newHra = isMetro ? basic * 0.5 : basic * 0.4;
+        } else if (prev.basicSalary && parseFloat(prev.basicSalary) > 0) {
+          newHra = isMetro ? parseFloat(prev.basicSalary) * 0.5 : parseFloat(prev.basicSalary) * 0.4;
+        }
+        return { ...prev, city: value, isMetro, hra: newHra ? String(newHra) : '' };
+      });
       return;
+    }
+
+    if (field === 'annualSalary') {
+       const annual = parseFloat(value) || 0;
+       const basic = annual * 0.4;
+       const isMetro = formData.isMetro;
+       const hra = isMetro ? basic * 0.5 : basic * 0.4;
+       
+       setFormData(prev => ({ 
+           ...prev, 
+           annualSalary: value,
+           basicSalary: value ? String(basic) : '',
+           hra: value ? String(hra) : ''
+       }));
+       return;
     }
 
     if (field === 'disabilityStatus') {
@@ -249,7 +289,7 @@ const TaxWizard = ({ onComplete, initialData, onStepChange, isDarkMode }) => {
       const isMobileValid = /^\d{10}$/.test(formData.mobile);
       return formData.name && formData.age && formData.city && isEmailValid && isMobileValid;
     }
-    if (stepId === 2) return formData.basicSalary && parseFloat(formData.basicSalary) > 0;
+    if (stepId === 2) return (formData.annualSalary && parseFloat(formData.annualSalary) > 0) || (formData.basicSalary && parseFloat(formData.basicSalary) > 0);
     return true;
   };
 
@@ -273,6 +313,7 @@ const TaxWizard = ({ onComplete, initialData, onStepChange, isDarkMode }) => {
 
       const apiPayload = {
         ...formData,
+        annualSalary: cleanValue(formData.annualSalary),
         basicSalary: cleanValue(formData.basicSalary),
         hra: cleanValue(formData.hra),
         allowances: cleanValue(formData.allowances),
@@ -280,7 +321,14 @@ const TaxWizard = ({ onComplete, initialData, onStepChange, isDarkMode }) => {
         interestIncome: cleanValue(formData.interestIncome),
         rentalIncome: cleanValue(formData.rentalIncome),
         freelanceIncome: cleanValue(formData.freelanceIncome),
-        investments80C: cleanValue(formData.investments80C),
+        investments80C: Math.min(150000, 
+           (parseFloat(formData.epf) || 0) +
+           (parseFloat(formData.ppf) || 0) +
+           (parseFloat(formData.elss) || 0) +
+           (parseFloat(formData.lic) || 0) +
+           (parseFloat(formData.nsc) || 0) +
+           (parseFloat(formData.other80c) || 0)
+        ),
         sec80CCD1B: cleanValue(formData.sec80CCD1B),
         deduction80D: cleanValue(formData.deduction80D),
         sec80DD: cleanValue(formData.sec80DD),
@@ -322,9 +370,9 @@ const TaxWizard = ({ onComplete, initialData, onStepChange, isDarkMode }) => {
 
   const labelStyle = cn("text-[10.5px] font-black uppercase tracking-[0.35em] ml-1 italic mb-2 block", isDarkMode ? "text-white/80" : "text-slate-950");
   const inputStyle = (field, customValidation) => cn(
-    "w-full border rounded-xl px-6 py-3.5 outline-none transition-all font-bold tracking-tight text-[14px] shadow-inner backdrop-blur-xl",
+    "w-full border rounded-xl px-5 py-3 outline-none transition-all font-bold tracking-tight text-[14px] shadow-inner backdrop-blur-xl",
     activeTheme.input,
-    isDarkMode ? "border-white/5 text-white placeholder:text-white/40" : "border-slate-950/10 text-slate-950 placeholder:text-slate-950/40 shadow-sm",
+    isDarkMode ? "border-white/5 text-white placeholder:text-white/30" : "border-slate-950/10 text-slate-950 placeholder:text-slate-950/40 shadow-sm",
     shake && (customValidation === false || !formData[field]) && "border-red-500/50 bg-red-500/5"
   );
 
@@ -357,16 +405,21 @@ const TaxWizard = ({ onComplete, initialData, onStepChange, isDarkMode }) => {
         );
       case 2:
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="col-span-full space-y-1">
+              <label className={labelStyle}>Annual Gross Salary (₹)</label>
+              <input type="number" placeholder="Total Gross Pay" className={inputStyle('annualSalary')} value={formData.annualSalary || ''} onChange={(e) => updateField('annualSalary', e.target.value)} />
+              <InputDesc text="Master total. Basic & HRA are auto-calculated from this." isDarkMode={isDarkMode} />
+            </div>
             <div className="space-y-1">
               <label className={labelStyle}>Annual Basic (₹)</label>
-              <input type="number" placeholder="Fixed annual pay" className={inputStyle('basicSalary')} value={formData.basicSalary} onChange={(e) => updateField('basicSalary', e.target.value)} />
-              <InputDesc text="Standard annual fixed component." isDarkMode={isDarkMode} />
+              <input type="number" placeholder="Fixed annual pay" className={cn(inputStyle('basicSalary'), "opacity-60 cursor-not-allowed pointer-events-none", isDarkMode ? "bg-black/20" : "bg-black/5")} value={formData.basicSalary} readOnly tabIndex={-1} />
+              <InputDesc text="40% of Gross Salary (Auto-filled)." isDarkMode={isDarkMode} />
             </div>
             <div className="space-y-1">
               <label className={labelStyle}>Annual HRA (₹)</label>
-              <input type="number" placeholder="Rent allowance component" className={inputStyle('hra')} value={formData.hra} onChange={(e) => updateField('hra', e.target.value)} />
-              <InputDesc text="House Rent Allowance from salary." isDarkMode={isDarkMode} />
+              <input type="number" placeholder="Rent allowance component" className={cn(inputStyle('hra'), "opacity-60 cursor-not-allowed pointer-events-none", isDarkMode ? "bg-black/20" : "bg-black/5")} value={formData.hra} readOnly tabIndex={-1} />
+              <InputDesc text={formData.isMetro ? "50% of Basic (Metro - Auto-filled)" : "40% of Basic (Non-Metro - Auto-filled)"} isDarkMode={isDarkMode} />
             </div>
             <div className="space-y-1">
               <label className={labelStyle}>Allowances (₹)</label>
@@ -402,8 +455,8 @@ const TaxWizard = ({ onComplete, initialData, onStepChange, isDarkMode }) => {
         );
       case 4:
         return (
-          <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-visible relative">
-            <div className={cn("flex items-center gap-2 border-b pb-4 mb-2", isDarkMode ? "border-white/5" : "border-slate-950/10")}>
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-visible relative">
+            <div className={cn("flex items-center gap-2 border-b pb-3 mb-1", isDarkMode ? "border-white/5" : "border-slate-950/10")}>
               {TAX_CATEGORIES.map(cat => (
                 <button
                   key={cat.id}
@@ -411,7 +464,7 @@ const TaxWizard = ({ onComplete, initialData, onStepChange, isDarkMode }) => {
                   className={cn(
                     "flex-1 py-2 px-3 rounded-xl flex items-center justify-center gap-2 transition-all border",
                     taxCategory === cat.id 
-                      ? `${activeTheme.accent}/40 border-current ${isDarkMode ? "text-white" : "text-slate-950"} shadow-lg scale-[1.05]` 
+                      ? `${activeTheme.accent}/40 border-current ${isDarkMode ? "text-white" : "text-slate-950"} shadow-lg` 
                       : isDarkMode 
                         ? "bg-white/5 border-white/10 text-white/40 hover:bg-white/10"
                         : "bg-slate-950/5 border-slate-950/10 text-slate-950/40 hover:bg-slate-950/10"
@@ -423,22 +476,65 @@ const TaxWizard = ({ onComplete, initialData, onStepChange, isDarkMode }) => {
               ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+            <div className="w-full">
                {taxCategory === 'savings' && (
-                 <>
-                   <div className="col-span-full space-y-0.5">
-                     <label className={labelStyle}>General Savings [80C] (₹)</label>
-                     <input type="number" placeholder="LIC/PPF/ELSS/Pension" className={inputStyle('investments80C')} value={formData.investments80C} onChange={(e) => updateField('investments80C', e.target.value)} />
-                     <InputDesc text="Combined limit for LIC, PPF, ELSS, 80CCC." limit="₹1,50,000" isDarkMode={isDarkMode} />
+                 <div className="flex flex-col h-full gap-y-3">
+                   <div className="border-b pb-2 mb-1 flex items-center justify-between" style={{ borderColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+                     <div>
+                       <h3 className={cn("text-lg font-black uppercase italic tracking-tighter", isDarkMode ? "text-white" : "text-slate-950")}>80C Breakdown</h3>
+                       <p className={cn("text-[10px] font-bold uppercase tracking-widest", isDarkMode ? "text-white/40" : "text-slate-950/40")}>Max total deduction: ₹1,50,000</p>
+                     </div>
+                     <div className={cn("px-4 py-2 rounded-xl border flex items-center gap-3 shadow-lg", (() => {
+                        const t80 = (parseFloat(formData.epf) || 0) + (parseFloat(formData.ppf) || 0) + (parseFloat(formData.elss) || 0) + (parseFloat(formData.lic) || 0) + (parseFloat(formData.nsc) || 0) + (parseFloat(formData.other80c) || 0);
+                        if (t80 > 150000) return isDarkMode ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-emerald-100 border-emerald-200 text-emerald-600";
+                        if (t80 > 0) return isDarkMode ? "bg-blue-500/10 border-blue-500/20 text-blue-400" : "bg-blue-100 border-blue-200 text-blue-600";
+                        return isDarkMode ? "bg-white/5 border-white/10 text-white/40" : "bg-slate-950/5 border-slate-950/10 text-slate-950/40";
+                     })())}>
+                       <div className="flex flex-col text-right">
+                         <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-70">Total 80C</span>
+                         <span className="text-sm font-bold tracking-tight">₹{((parseFloat(formData.epf) || 0) + (parseFloat(formData.ppf) || 0) + (parseFloat(formData.elss) || 0) + (parseFloat(formData.lic) || 0) + (parseFloat(formData.nsc) || 0) + (parseFloat(formData.other80c) || 0)).toLocaleString('en-IN')}</span>
+                       </div>
+                     </div>
                    </div>
-                   <div className="col-span-full space-y-0.5">
+                   
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2">
+                     <div className="space-y-0.5">
+                       <label className={labelStyle}>EPF (₹)</label>
+                       <input type="number" placeholder="Employee Provident Fund" className={inputStyle('epf')} value={formData.epf} onChange={(e) => updateField('epf', e.target.value)} />
+                     </div>
+                     <div className="space-y-0.5">
+                       <label className={labelStyle}>PPF (₹)</label>
+                       <input type="number" placeholder="Public Provident Fund" className={inputStyle('ppf')} value={formData.ppf} onChange={(e) => updateField('ppf', e.target.value)} />
+                     </div>
+                     <div className="space-y-0.5">
+                       <label className={labelStyle}>ELSS (₹)</label>
+                       <input type="number" placeholder="Equity Linked Mutual Funds" className={inputStyle('elss')} value={formData.elss} onChange={(e) => updateField('elss', e.target.value)} />
+                     </div>
+                     <div className="space-y-0.5">
+                       <label className={labelStyle}>LIC Prem (₹)</label>
+                       <input type="number" placeholder="Life Insurance Premium" className={inputStyle('lic')} value={formData.lic} onChange={(e) => updateField('lic', e.target.value)} />
+                     </div>
+                     <div className="space-y-0.5">
+                       <label className={labelStyle}>NSC (₹)</label>
+                       <input type="number" placeholder="National Savings Certificate" className={inputStyle('nsc')} value={formData.nsc} onChange={(e) => updateField('nsc', e.target.value)} />
+                     </div>
+                     <div className="space-y-0.5">
+                       <label className={labelStyle}>Other 80C (₹)</label>
+                       <input type="number" placeholder="Tuition Fees / Home Principal" className={inputStyle('other80c')} value={formData.other80c} onChange={(e) => updateField('other80c', e.target.value)} />
+                     </div>
+                   </div>
+                   
+                   <div className="space-y-0.5 mt-1 pt-2 border-t" style={{ borderColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
                      <label className={labelStyle}>NPS Additional [80CCD(1B)] (₹)</label>
                      <input type="number" placeholder="Extra NPS" className={inputStyle('sec80CCD1B')} value={formData.sec80CCD1B} onChange={(e) => updateField('sec80CCD1B', e.target.value)} />
                      <InputDesc text="Bonus deduction over and above 80C limit." limit="₹50,000" isDarkMode={isDarkMode} />
                    </div>
-                 </>
+                 </div>
                )}
-               {taxCategory === 'health' && (
+
+               {taxCategory !== 'savings' && (
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                   {taxCategory === 'health' && (
                   <>
                     <div className="space-y-0.5">
                       <label className={labelStyle}>Health Insurance [80D] (₹)</label>
@@ -469,22 +565,22 @@ const TaxWizard = ({ onComplete, initialData, onStepChange, isDarkMode }) => {
                  <>
                    <div className="space-y-0.5">
                      <label className={labelStyle}>Home Loan Int [24(b)] (₹)</label>
-                     <input type="number" placeholder="Self-Occupied" className={inputStyle('sec24b')} value={formData.sec24b} onChange={(e) => updateField('sec24b', e.target.value)} />
+                     <input type="number" placeholder="Self-Occupied Home Loan Interest" className={inputStyle('sec24b')} value={formData.sec24b} onChange={(e) => updateField('sec24b', e.target.value)} />
                      <InputDesc text="Interest on Self-Occupied property." limit="₹2,00,000" isDarkMode={isDarkMode} />
                    </div>
                    <div className="space-y-0.5">
                      <label className={labelStyle}>Education [80E] (₹)</label>
-                     <input type="number" placeholder="Interest Only" className={inputStyle('sec80E')} value={formData.sec80E} onChange={(e) => updateField('sec80E', e.target.value)} />
+                     <input type="number" placeholder="Education Loan Interest Paid" className={inputStyle('sec80E')} value={formData.sec80E} onChange={(e) => updateField('sec80E', e.target.value)} />
                      <InputDesc text="Deduction available for up to 8 years." limit="NO UPPER LIMIT" isDarkMode={isDarkMode} />
                    </div>
                    <div className="space-y-0.5">
                      <label className={labelStyle}>Housing [80EEA] (₹)</label>
-                     <input type="number" placeholder="Addl Interest" className={inputStyle('sec80EEA')} value={formData.sec80EEA} onChange={(e) => updateField('sec80EEA', e.target.value)} />
+                     <input type="number" placeholder="Affordable Housing Loan Interest" className={inputStyle('sec80EEA')} value={formData.sec80EEA} onChange={(e) => updateField('sec80EEA', e.target.value)} />
                      <InputDesc text="For affordable housing loans (2019-22)." limit="₹1,50,000" isDarkMode={isDarkMode} />
                    </div>
                    <div className="space-y-0.5">
                      <label className={labelStyle}>First Home [80EE] (₹)</label>
-                     <input type="number" placeholder="Legacy Scheme" className={inputStyle('sec80EE')} value={formData.sec80EE} onChange={(e) => updateField('sec80EE', e.target.value)} />
+                     <input type="number" placeholder="First Home Loan (2016-17 Scheme)" className={inputStyle('sec80EE')} value={formData.sec80EE} onChange={(e) => updateField('sec80EE', e.target.value)} />
                      <InputDesc text="Deduction for first home loans (2016-17)." limit="₹50,000" isDarkMode={isDarkMode} />
                    </div>
                  </>
@@ -506,9 +602,11 @@ const TaxWizard = ({ onComplete, initialData, onStepChange, isDarkMode }) => {
                      <input type="number" placeholder="Savings/FD Interest" className={inputStyle('sec80TTA')} value={formData.sec80TTA} onChange={(e) => updateField('sec80TTA', e.target.value)} />
                      <InputDesc text="Savings & FD interest tax benefit." limit={formData.age && formData.age.includes('Senior') ? "₹50,000 (80TTB)" : "₹10,000 (80TTA)"} isDarkMode={isDarkMode} />
                    </div>
-                 </>
-               )}
-            </div>
+                  </>
+                )}
+             </div>
+            )}
+          </div>
             
             <StatutoryAlert 
               visible={alert.visible} 
@@ -519,25 +617,69 @@ const TaxWizard = ({ onComplete, initialData, onStepChange, isDarkMode }) => {
           </div>
         );
       case 5:
+        const total80c = Math.min(150000, (parseFloat(formData.epf) || 0) + (parseFloat(formData.ppf) || 0) + (parseFloat(formData.elss) || 0) + (parseFloat(formData.lic) || 0) + (parseFloat(formData.nsc) || 0) + (parseFloat(formData.other80c) || 0));
+        const formatMoney = (val) => val ? `₹${parseFloat(val).toLocaleString('en-IN')}` : '₹0';
+        
         return (
-          <div className="flex flex-col items-center justify-center py-6 text-center space-y-8 animate-in zoom-in-95 duration-500 min-h-[350px]">
-            <div className={cn("w-20 h-20 rounded-full border-2 flex items-center justify-center shadow-3xl transition-all duration-700", activeTheme.glow, activeTheme.border, activeTheme.text)}>
-               <Sparkles size={32} className="animate-pulse" />
+          <div className="flex flex-col w-full h-full animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
+            <div className={cn("flex items-center justify-between border-b pb-4 mb-4 shrink-0", isDarkMode ? "border-white/5" : "border-slate-950/10")}>
+              <div>
+                <h2 className={cn("text-2xl font-black uppercase italic tracking-tighter", isDarkMode ? "text-white" : "text-slate-950")}>Data Summary</h2>
+                <p className={cn("text-[10px] font-bold uppercase tracking-widest mt-1", isDarkMode ? "text-white/40" : "text-slate-950/40")}>Final review before neural synthesis</p>
+              </div>
+              <div className={cn("w-12 h-12 rounded-full border-2 flex items-center justify-center", activeTheme.glow, activeTheme.border, activeTheme.text)}>
+                <Sparkles size={20} className="animate-pulse" />
+              </div>
             </div>
-            <div className="space-y-2">
-              <h2 className={cn("text-3xl md:text-4xl font-black tracking-tighter uppercase italic leading-none", isDarkMode ? "text-white" : "text-slate-950")}>Neural Sync</h2>
-              <p className={cn("text-[11px] font-black uppercase tracking-[0.6em] italic", activeTheme.text)}>Synthesis Phase Ready</p>
+
+            <div className="flex-1 overflow-y-auto no-scrollbar pb-6 space-y-6 pr-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Profile Card */}
+                <div className={cn("p-5 rounded-2xl border", isDarkMode ? "bg-white/5 border-white/10 text-white" : "bg-slate-950/5 border-slate-950/10 text-slate-950")}>
+                  <h3 className={cn("text-xs font-black uppercase tracking-widest mb-4", isDarkMode ? "text-white/40" : "text-slate-950/40")}>Profile & Identity</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center"><span className={cn("text-[10px] font-bold uppercase", isDarkMode ? "text-white/60" : "text-slate-700")}>Name</span><span className="text-xs font-black uppercase">{formData.name || '-'}</span></div>
+                    <div className="flex justify-between items-center"><span className={cn("text-[10px] font-bold uppercase", isDarkMode ? "text-white/60" : "text-slate-700")}>Email</span><span className="text-xs font-black">{formData.email || '-'}</span></div>
+                    <div className="flex justify-between items-center"><span className={cn("text-[10px] font-bold uppercase", isDarkMode ? "text-white/60" : "text-slate-700")}>Mobile</span><span className="text-xs font-black">{formData.mobile || '-'}</span></div>
+                    <div className="flex justify-between items-center"><span className={cn("text-[10px] font-bold uppercase", isDarkMode ? "text-white/60" : "text-slate-700")}>Age Group</span><span className="text-xs font-black uppercase">{formData.age || '-'}</span></div>
+                    <div className="flex justify-between items-center"><span className={cn("text-[10px] font-bold uppercase", isDarkMode ? "text-white/60" : "text-slate-700")}>Location</span><span className="text-xs font-black uppercase">{formData.city || '-'}</span></div>
+                  </div>
+                </div>
+
+                {/* Income Card */}
+                <div className={cn("p-5 rounded-2xl border", isDarkMode ? "bg-white/5 border-white/10 text-white" : "bg-slate-950/5 border-slate-950/10 text-slate-950")}>
+                  <h3 className={cn("text-xs font-black uppercase tracking-widest mb-4", isDarkMode ? "text-white/40" : "text-slate-950/40")}>Income Breakdown</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase opacity-60">Basic Salary</span><span className="text-xs font-black">{formatMoney(formData.basicSalary)}</span></div>
+                    <div className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase opacity-60">HRA Received</span><span className="text-xs font-black">{formatMoney(formData.hra)}</span></div>
+                    <div className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase opacity-60">Other Perks</span><span className="text-xs font-black">{formatMoney(formData.otherAllowances)}</span></div>
+                    <div className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase opacity-60">Bonus</span><span className="text-xs font-black">{formatMoney(formData.bonus)}</span></div>
+                    <div className="flex justify-between items-center pt-2 border-t border-current/10"><span className="text-[10px] font-bold uppercase opacity-60">Interest/Rental/Other</span><span className="text-xs font-black">{formatMoney((parseFloat(formData.interestIncome)||0) + (parseFloat(formData.rentalIncome)||0) + (parseFloat(formData.freelanceIncome)||0))}</span></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Deductions Card */}
+              <div className={cn("p-5 rounded-2xl border", isDarkMode ? "bg-white/5 border-white/10 text-white" : "bg-slate-950/5 border-slate-950/10 text-slate-950")}>
+                <h3 className={cn("text-xs font-black uppercase tracking-widest mb-4", isDarkMode ? "text-white/40" : "text-slate-950/40")}>Tax Savings & Deductions</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                  {parseFloat(formData.epf) > 0 && <div className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase opacity-60">EPF (80C)</span><span className="text-xs font-black text-emerald-500">{formatMoney(formData.epf)}</span></div>}
+                  {parseFloat(formData.ppf) > 0 && <div className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase opacity-60">PPF (80C)</span><span className="text-xs font-black text-emerald-500">{formatMoney(formData.ppf)}</span></div>}
+                  {parseFloat(formData.elss) > 0 && <div className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase opacity-60">ELSS (80C)</span><span className="text-xs font-black text-emerald-500">{formatMoney(formData.elss)}</span></div>}
+                  {parseFloat(formData.lic) > 0 && <div className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase opacity-60">LIC Prem (80C)</span><span className="text-xs font-black text-emerald-500">{formatMoney(formData.lic)}</span></div>}
+                  {parseFloat(formData.nsc) > 0 && <div className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase opacity-60">NSC (80C)</span><span className="text-xs font-black text-emerald-500">{formatMoney(formData.nsc)}</span></div>}
+                  {parseFloat(formData.other80c) > 0 && <div className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase opacity-60">Other 80C</span><span className="text-xs font-black text-emerald-500">{formatMoney(formData.other80c)}</span></div>}
+                  {total80c === 0 && <div className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase opacity-60">80C Investments</span><span className="text-xs font-black text-emerald-500">₹0</span></div>}
+                  
+                  <div className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase opacity-60">NPS Additional (80CCD)</span><span className="text-xs font-black text-emerald-500">{formatMoney(formData.sec80CCD1B)}</span></div>
+                  <div className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase opacity-60">Health Insurance (80D)</span><span className="text-xs font-black text-emerald-500">{formatMoney((parseFloat(formData.sec80D_self)||0) + (parseFloat(formData.sec80D_parents)||0))}</span></div>
+                  <div className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase opacity-60">Home Loan Interest (24b)</span><span className="text-xs font-black text-emerald-500">{formatMoney(formData.sec24b)}</span></div>
+                  <div className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase opacity-60">HRA Rent Paid</span><span className="text-xs font-black text-emerald-500">{formatMoney(formData.rentPaid)}</span></div>
+                  <div className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase opacity-60">Education Loan (80E)</span><span className="text-xs font-black text-emerald-500">{formatMoney(formData.sec80E)}</span></div>
+                </div>
+              </div>
             </div>
-            <button 
-               disabled={isSaving}
-               onClick={handleFinalize}
-               className={cn(
-                 "px-14 py-5 shadow-2xl hover:scale-105 active:scale-95 text-[13px] font-black uppercase tracking-[0.5em] rounded-[2.5rem] transition-all flex items-center gap-5",
-                 isDarkMode ? "bg-white text-slate-950" : "bg-slate-950 text-white shadow-slate-950/20"
-               )}
-            >
-               {isSaving ? <Loader2 className="animate-spin" /> : <><Rocket size={20} /> Execute Synthesis</>}
-            </button>
           </div>
         );
       default: return null;
@@ -545,60 +687,15 @@ const TaxWizard = ({ onComplete, initialData, onStepChange, isDarkMode }) => {
   };
 
   return (
-    <div className="w-full flex flex-col items-center justify-center overflow-visible pt-4 pb-12 origin-center scale-[0.9] lg:scale-100">
-      
-      {/* 5 TOP ICONS NAVIGATION */}
-      <div className="w-full max-w-2xl flex items-center justify-between mb-10 px-12 relative">
-         <div className={cn("absolute top-1/2 left-0 right-0 h-px -translate-y-1/2 z-0", isDarkMode ? "bg-white/10" : "bg-slate-950/10")} />
-         
-         <motion.div 
-            animate={{ x: (currentStep - 1) * (100 / 4) + '%' }} 
-            className={cn("absolute top-[-15px] w-8 h-8 flex items-center justify-center z-20 pointer-events-none transition-all duration-700", activeTheme.text)}
-            style={{ left: 'calc(12.5% - 16px)' }}
-         >
-            <ChevronDown size={32} className="fill-current animate-bounce" />
-         </motion.div>
-
-         {STEPS.map((step) => {
-            const isActive = currentStep === step.id;
-            const isCompleted = currentStep > step.id;
-            const Icon = step.icon;
-            const theme = themes[step.theme];
-
-            return (
-              <div key={step.id} className="relative z-10 flex flex-col items-center">
-                <div className={cn(
-                  "w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-all duration-700 shadow-xl",
-                  isActive 
-                    ? `${isDarkMode ? "bg-white/10" : "bg-white"} ${theme.border} ${theme.text} ${theme.glow} scale-125` 
-                    : isCompleted
-                      ? `${isDarkMode ? "bg-white/5" : "bg-white/40"} ${theme.border} ${theme.text}`
-                      : isDarkMode 
-                        ? "bg-slate-950 border-white/10 text-white/20"
-                        : "bg-white border-slate-950/5 text-slate-950/20 shadow-inner"
-                )}>
-                   <Icon size={22} />
-                </div>
-                <span className={cn(
-                  "mt-4 text-[10px] font-black uppercase tracking-[0.4em] transition-all duration-700",
-                  isActive 
-                    ? (isDarkMode ? "text-white opacity-100 italic" : "text-slate-950 opacity-100 italic") 
-                    : (isDarkMode ? "text-white/20 opacity-40" : "text-slate-950/20 opacity-40")
-                )}>
-                   {step.title}
-                </span>
-              </div>
-            );
-         })}
-      </div>
+    <div className="w-full h-full flex flex-col items-center justify-start overflow-hidden min-h-0">
 
       {/* THE VIVID DYNAMIC SLIDER */}
       <div className={cn(
-        "w-full flex items-stretch rounded-[4rem] border shadow-[0_60px_150px_rgba(0,0,0,0.5)] relative h-[680px] overflow-visible transition-all duration-700",
-        isDarkMode ? "bg-[#0a1121]/80 backdrop-blur-3xl border-white/10" : "bg-white/60 backdrop-blur-3xl border-slate-950/5"
+        "w-full flex-1 flex items-stretch relative overflow-hidden min-h-0 transition-all duration-700",
+        isDarkMode ? "bg-[#0a1121]/80 backdrop-blur-3xl" : "bg-white/60 backdrop-blur-3xl"
       )}>
         
-        <div className={cn("absolute inset-0 rounded-[4rem] transition-all duration-1000 opacity-90 bg-gradient-to-br pointer-events-none", activeTheme.bg, isDarkMode ? "to-slate-950/90" : "to-white/90")} />
+        <div className={cn("absolute inset-0 transition-all duration-1000 opacity-90 bg-gradient-to-br pointer-events-none", activeTheme.bg, isDarkMode ? "to-slate-950/90" : "to-white/90")} />
         <div className={cn("absolute top-0 left-10 right-10 h-1 blur-sm rounded-full transition-all duration-1000 opacity-60 z-20", activeTheme.accent)} />
 
         {STEPS.map((step) => {
@@ -662,18 +759,13 @@ const TaxWizard = ({ onComplete, initialData, onStepChange, isDarkMode }) => {
                        </div>
                     </div>
 
-                    <div className="flex-1 overflow-visible min-h-0">
-                      <div className={cn(
-                        "backdrop-blur-3xl border rounded-[3rem] p-8 md:p-10 shadow-[0_40px_100px_rgba(0,0,0,0.1)] h-full flex flex-col justify-start pt-14 overflow-visible relative",
-                        isDarkMode ? "bg-slate-950/90 border-white/10" : "bg-white/80 border-slate-950/10"
-                      )}>
-                         <div className="w-full relative z-[10]">
-                           {renderStepInputs(step.id)}
-                         </div>
-                      </div>
+                    <div className="flex-1 overflow-y-auto no-scrollbar min-h-0 w-full pt-4" style={{ overflowY: 'auto', overflowX: 'visible' }}>
+                       <div className="w-full relative z-[10] pb-24 overflow-visible">
+                         {renderStepInputs(step.id)}
+                       </div>
                     </div>
 
-                    <div className="flex justify-between items-center mt-6 shrink-0 h-16">
+                    <div className="flex justify-between items-center mt-4 pt-4 shrink-0 h-16 border-t" style={{ borderColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
                        <div className="flex gap-3">
                           {STEPS.map(s => (
                             <div key={s.id} className={cn("h-2 rounded-full transition-all duration-500", s.id === currentStep ? (isDarkMode ? "bg-white w-20" : "bg-slate-950 w-20") : (isDarkMode ? "bg-white/10 w-6" : "bg-slate-950/10 w-6"))} />
@@ -688,7 +780,7 @@ const TaxWizard = ({ onComplete, initialData, onStepChange, isDarkMode }) => {
                               <ChevronLeft size={26} />
                             </button>
                           )}
-                          {currentStep < 5 && (
+                          {currentStep < 5 ? (
                             <button 
                               onClick={(e) => { e.stopPropagation(); handleNext(); }} 
                               className={cn(
@@ -699,6 +791,17 @@ const TaxWizard = ({ onComplete, initialData, onStepChange, isDarkMode }) => {
                               )}
                             >
                               Advance <ChevronRight size={20} />
+                            </button>
+                          ) : (
+                            <button 
+                               disabled={isSaving}
+                               onClick={(e) => { e.stopPropagation(); handleFinalize(); }}
+                               className={cn(
+                                 "px-8 md:px-10 h-14 shadow-xl hover:scale-105 active:scale-95 text-[11px] md:text-[12px] font-black uppercase tracking-[0.3em] rounded-2xl transition-all flex items-center gap-3 md:gap-4",
+                                 isDarkMode ? "bg-white text-slate-950" : "bg-slate-950 text-white shadow-slate-950/20"
+                               )}
+                            >
+                               {isSaving ? <Loader2 className="animate-spin" /> : <><Rocket size={18} /> Execute Synthesis</>}
                             </button>
                           )}
                        </div>

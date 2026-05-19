@@ -32,30 +32,6 @@ const Hero = ({ onGetStarted, isDarkMode }) => {
       </div>
 
       <div className="relative z-10 max-w-5xl w-full text-center space-y-10">
-        {/* Brand & Badge */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center gap-6"
-        >
-          <div className="flex items-center gap-4">
-             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-2xl border border-white/20">
-               <ShieldCheck size={32} color="white" />
-             </div>
-             <span className={cn("text-4xl font-black tracking-tighter uppercase italic leading-none", isDarkMode ? "text-white" : "text-slate-950")}>
-               Tax<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 not-italic">AI</span>
-             </span>
-          </div>
-
-          <div className={cn(
-            "px-6 py-2.5 rounded-full border backdrop-blur-md flex items-center gap-3",
-            isDarkMode ? "bg-white/5 border-white/10" : "bg-slate-950/5 border-slate-950/10 shadow-sm"
-          )}>
-             <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-             <span className={cn("text-[10px] font-black uppercase tracking-[0.3em]", isDarkMode ? "text-white/60" : "text-slate-950/60")}>Neural Tax Engine <span className="text-blue-500">Active</span></span>
-          </div>
-        </motion.div>
-
         {/* Headline */}
         <div className="space-y-4">
           <motion.h1 
@@ -98,27 +74,6 @@ const Hero = ({ onGetStarted, isDarkMode }) => {
             </span>
           </button>
 
-          {/* Features */}
-          <div className={cn("grid grid-cols-2 md:grid-cols-4 gap-8 pt-12 border-t w-full", isDarkMode ? "border-white/5" : "border-slate-950/5")}>
-             {[
-               { icon: Cpu, label: "AI Synthesis" },
-               { icon: Shield, label: "Zero-Data Leak" },
-               { icon: Zap, label: "Instant Calc" },
-               { icon: TrendingUp, label: "Wealth Max" }
-             ].map((f, i) => (
-               <div key={i} className="flex flex-col items-center gap-3 group cursor-default">
-                  <div className={cn(
-                    "w-12 h-12 rounded-2xl border flex items-center justify-center transition-all",
-                    isDarkMode 
-                      ? "bg-white/5 border-white/10 text-white/40 group-hover:text-white group-hover:bg-white/10" 
-                      : "bg-slate-950/5 border-slate-950/10 text-slate-950/40 group-hover:text-slate-950 group-hover:bg-slate-950/10"
-                  )}>
-                    <f.icon size={20} />
-                  </div>
-                  <span className={cn("text-[9px] font-black uppercase tracking-[0.2em] transition-colors", isDarkMode ? "text-white/30 group-hover:text-white/60" : "text-slate-950/30 group-hover:text-slate-950/60")}>{f.label}</span>
-               </div>
-             ))}
-          </div>
         </motion.div>
       </div>
     </div>

@@ -13,8 +13,8 @@ function App() {
   const [taxData, setTaxData] = useState(null);
   const [reportMode, setReportMode] = useState('portfolio');
   const [isHandbookOpen, setIsHandbookOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const [bgAura, setBgAura] = useState(isDarkMode ? '#0f172a' : '#f8fafc');
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [bgAura, setBgAura] = useState('#f8fafc');
 
   const themeColors = {
     dark: {
@@ -153,12 +153,12 @@ function App() {
           </header>
 
           <main className={cn(
-            "relative z-10 flex-1 flex flex-col no-scrollbar",
-            activeTab === 'wizard' ? "items-center justify-center overflow-hidden" : "overflow-y-auto"
+            "relative z-10 flex-1 flex flex-col min-h-0 no-scrollbar",
+            activeTab === 'wizard' ? "overflow-hidden" : "overflow-y-auto custom-scrollbar"
           )}>
             <div className={cn(
-              "w-full max-w-7xl mx-auto px-6",
-              activeTab === 'wizard' ? "" : "h-full"
+              "w-full mx-auto flex flex-col min-h-0",
+              activeTab === 'wizard' ? "h-full px-0 pt-[74px]" : "min-h-full px-4 md:px-10 pt-28 pb-8"
             )}>
               <AnimatePresence mode="wait">
                 {activeTab === 'dashboard' && (
@@ -168,7 +168,7 @@ function App() {
                     animate={{ opacity: 1, y: 0 }} 
                     exit={{ opacity: 0, y: -15 }} 
                     transition={{ duration: 0.4 }} 
-                    className="w-full pt-28"
+                    className="w-full"
                   >
                     <Overview 
                       data={taxData} 
@@ -183,7 +183,7 @@ function App() {
                   </motion.div>
                 )}
                 {activeTab === 'wizard' && (
-                  <motion.div key="wizard" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }} transition={{ duration: 0.5 }} className="h-full flex flex-col justify-center">
+                  <motion.div key="wizard" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }} transition={{ duration: 0.5 }} className="w-full h-full flex flex-col min-h-0">
                     <TaxWizard 
                       onComplete={handleSynthesisComplete} 
                       initialData={taxData} 

@@ -86,10 +86,18 @@ def get_tax_synthesis(data):
     Main Engine Entry Point - Future Proof 2026 Implementation (V57.0)
     """
     # 1. Sum up Gross Income
+    # Prefer the master 'annualSalary' field if provided, otherwise sum the individual components
+    salary_income = float(data.get('annualSalary', 0))
+    if salary_income == 0:
+        salary_income = (
+            float(data.get('basicSalary', 0)) + 
+            float(data.get('hra', 0)) + 
+            float(data.get('allowances', 0)) + 
+            float(data.get('bonus', 0))
+        )
+        
     gross_income = (
-        float(data.get('basicSalary', 0)) + 
-        float(data.get('allowances', 0)) + 
-        float(data.get('bonus', 0)) + 
+        salary_income + 
         float(data.get('interestIncome', 0)) + 
         float(data.get('rentalIncome', 0)) + 
         float(data.get('freelanceIncome', 0))
