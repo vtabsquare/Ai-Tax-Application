@@ -92,6 +92,8 @@ function App() {
                   </span>
                 </div>
               </div>
+              <div className="flex items-center gap-3">
+                <a href="https://www.vtabsquare.com/?demo=1&product=tax-ai&source=tax-ai-application" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg transition-colors hover:bg-blue-700">Contact for Demo ↗</a>
               <button 
                 onClick={toggleTheme}
                 className={cn(
@@ -101,6 +103,7 @@ function App() {
               >
                 {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
+              </div>
             </div>
           </header>
           <div className="flex-1 flex flex-col justify-center overflow-hidden">
@@ -128,6 +131,7 @@ function App() {
               </div>
               
               <nav className="flex items-center gap-2">
+                <a href="https://www.vtabsquare.com/?demo=1&product=tax-ai&source=tax-ai-application" target="_blank" rel="noopener noreferrer" className="inline-flex items-center rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-blue-700">Contact for Demo ↗</a>
                 <button 
                   onClick={toggleTheme}
                   className={cn(
